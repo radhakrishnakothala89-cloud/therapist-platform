@@ -1,3 +1,4 @@
+
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { AuthProvider } from "./context/AuthContext";
 
@@ -19,11 +20,12 @@ function App() {
         <Routes>
 
           {/* =========================
-              HOME
+              HOME PAGE
+              Open website → Login
           ========================= */}
           <Route
             path="/"
-            element={<Navigate to="/dashboard" replace />}
+            element={<Navigate to="/login" replace />}
           />
 
           {/* =========================
@@ -92,7 +94,7 @@ function App() {
           ========================= */}
           <Route
             path="*"
-            element={<Navigate to="/dashboard" replace />}
+            element={<Navigate to="/login" replace />}
           />
 
         </Routes>
