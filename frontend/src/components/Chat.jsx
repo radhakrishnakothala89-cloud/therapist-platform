@@ -1,30 +1,44 @@
+
 import React, { useState, useEffect, useRef } from "react";
-const socket = io(
-  import.meta.env.VITE_SOCKET_URL ||
-  "https://therapist-platform-backend.onrender.com"
-);
-export default function Chat({ currentUserId, recipientId, recipientName }) {
+import socket from "../socket";
+
+export default function Chat({
+  currentUserId,
+  recipientId,
+  recipientName,
+}) {
   const [messages, setMessages] = useState([]);
   const [input, setInput] = useState("");
   const messagesEndRef = useRef(null);
 
   useEffect(() => {
-    if (currentUserId) socket.emit("join", currentUserId);
+    if (!currentUserId) return;
 
-    socket.on("receiveMessage", (message) => {
+    socket.emit("join", currentUserId);
+
+    const handleReceiveMessage = (message) => {
       setMessages((prev) => [...prev, message]);
-    });
+    };
 
-    return () => socket.off("receiveMessage");
+    socket.on("receiveMessage", handleReceiveMessage);
+
+    return () => {
+      socket.off("receiveMessage", handleReceiveMessage);
+    };
   }, [currentUserId]);
 
   useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+    messagesEndRef.current?.scrollIntoView({
+      behavior: "smooth",
+    });
   }, [messages]);
 
   const handleSendMessage = (e) => {
     e.preventDefault();
-    if (!input.trim()) return;
+
+    if (!input.trim() || !currentUserId || !recipientId) {
+      return;
+    }
 
     const messageData = {
       senderId: currentUserId,
@@ -33,7 +47,15 @@ export default function Chat({ currentUserId, recipientId, recipientName }) {
     };
 
     socket.emit("sendMessage", messageData);
-    setMessages((prev) => [...prev, { ...messageData, _id: Date.now() }]);
+
+    setMessages((prev) => [
+      ...prev,
+      {
+        ...messageData,
+        _id: Date.now(),
+      },
+    ]);
+
     setInput("");
   };
 
@@ -79,15 +101,32 @@ export default function Chat({ currentUserId, recipientId, recipientName }) {
         >
           {recipientName ? recipientName[0] : "C"}
         </div>
+
         <div>
-          <h3 style={{ margin: 0, fontSize: "16px", fontWeight: "700", color: "#1E293B" }}>
+          <h3
+            style={{
+              margin: 0,
+              fontSize: "16px",
+              fontWeight: "700",
+              color: "#1E293B",
+            }}
+          >
             {recipientName || "Client"}
           </h3>
-          <span style={{ fontSize: "12px", color: "#10B981", fontWeight: "500" }}>● Active Now</span>
+
+          <span
+            style={{
+              fontSize: "12px",
+              color: "#10B981",
+              fontWeight: "500",
+            }}
+          >
+            ● Active Now
+          </span>
         </div>
       </div>
 
-      {/* Message History Area (Soft Modern Wallpaper Background) */}
+      {/* Message History */}
       <div
         style={{
           flex: 1,
@@ -96,20 +135,42 @@ export default function Chat({ currentUserId, recipientId, recipientName }) {
           display: "flex",
           flexDirection: "column",
           gap: "12px",
-          backgroundColor: "#1eb3d1", // Soft modern slate gray
+          backgroundColor: "#1eb3d1",
         }}
       >
         {messages.length === 0 ? (
-          <div style={{ textAlign: "center", marginTop: "auto", marginBottom: "auto", color: "#94A3B8" }}>
-            <p style={{ margin: 0, fontSize: "14px" }}>No messages yet.</p>
-            <small style={{ fontSize: "12px" }}>Send a message to start the consultation.</small>
+          <div
+            style={{
+              textAlign: "center",
+              marginTop: "auto",
+              marginBottom: "auto",
+              color: "#FFFFFF",
+            }}
+          >
+            <p
+              style={{
+                margin: 0,
+                fontSize: "14px",
+              }}
+            >
+              No messages yet.
+            </p>
+
+            <small
+              style={{
+                fontSize: "12px",
+              }}
+            >
+              Send a message to start the consultation.
+            </small>
           </div>
         ) : (
           messages.map((m, i) => {
             const isMe = m.senderId === currentUserId;
+
             return (
               <div
-                key={i}
+                key={m._id || i}
                 style={{
                   alignSelf: isMe ? "flex-end" : "flex-start",
                   maxWidth: "75%",
@@ -117,13 +178,16 @@ export default function Chat({ currentUserId, recipientId, recipientName }) {
               >
                 <div
                   style={{
-                    backgroundColor: isMe ? "#4F46E5" : "#4F46E5",
-                    color: isMe ? "#" : "#7fde3b",
+                    backgroundColor: isMe ? "#4F46E5" : "#FFFFFF",
+                    color: isMe ? "#FFFFFF" : "#1E293B",
                     padding: "10px 16px",
-                    borderRadius: isMe ? "16px 16px 4px 16px" : "16px 16px 16px 4px",
+                    borderRadius: isMe
+                      ? "16px 16px 4px 16px"
+                      : "16px 16px 16px 4px",
                     fontSize: "14px",
                     lineHeight: "1.5",
-                    boxShadow: "0 1px 2px rgba(0, 0, 0, 0.05)",
+                    boxShadow:
+                      "0 1px 2px rgba(0, 0, 0, 0.05)",
                   }}
                 >
                   {m.content}
@@ -132,10 +196,11 @@ export default function Chat({ currentUserId, recipientId, recipientName }) {
             );
           })
         )}
+
         <div ref={messagesEndRef} />
       </div>
 
-      {/* Input Message Form */}
+      {/* Input Form */}
       <form
         onSubmit={handleSendMessage}
         style={{
@@ -160,6 +225,7 @@ export default function Chat({ currentUserId, recipientId, recipientName }) {
             backgroundColor: "#F8FAFC",
           }}
         />
+
         <button
           type="submit"
           style={{
@@ -171,7 +237,8 @@ export default function Chat({ currentUserId, recipientId, recipientName }) {
             fontWeight: "600",
             fontSize: "14px",
             cursor: "pointer",
-            boxShadow: "0 1px 2px rgba(0, 0, 0, 0.05)",
+            boxShadow:
+              "0 1px 2px rgba(0, 0, 0, 0.05)",
           }}
         >
           Send
