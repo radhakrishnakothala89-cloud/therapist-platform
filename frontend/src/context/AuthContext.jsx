@@ -1,4 +1,3 @@
-
 import React, { createContext, useState, useEffect } from "react";
 import axiosInstance from "../api/axiosInstance";
 
@@ -18,11 +17,12 @@ export const AuthProvider = ({ children }) => {
       return savedTherapist ? JSON.parse(savedTherapist) : null;
     } catch (error) {
       console.error("Invalid therapist data:", error);
+      localStorage.removeItem("therapist");
       return null;
     }
   });
 
-  // Loading state while checking session
+  // Loading state
   const [loading, setLoading] = useState(true);
 
   // Restore session when page is refreshed
@@ -30,24 +30,35 @@ export const AuthProvider = ({ children }) => {
     const restoreSession = async () => {
       const storedToken = localStorage.getItem("token");
 
-      // No token means user is not logged in
+      // No token
       if (!storedToken) {
         setLoading(false);
         return;
       }
 
       try {
+        console.log("Restoring session...");
+
         const response = await axiosInstance.get("/profile/me");
 
-        console.log("Session restored:", response.data);
+        console.log("Profile response:", response.data);
 
-        if (response.data.therapist) {
-          setTherapist(response.data.therapist);
+        // Backend returns user, not therapist
+        const user = response.data.user;
+
+        if (user) {
+          console.log("Therapist restored:", user);
+
+          setTherapist(user);
 
           localStorage.setItem(
             "therapist",
-            JSON.stringify(response.data.therapist)
+            JSON.stringify(user)
           );
+        } else {
+          console.error("No user data received from backend");
+
+          setTherapist(null);
         }
       } catch (error) {
         console.error(
@@ -55,7 +66,7 @@ export const AuthProvider = ({ children }) => {
           error.response?.data || error.message
         );
 
-        // Token is invalid or expired
+        // Token expired or invalid
         if (error.response?.status === 401) {
           localStorage.removeItem("token");
           localStorage.removeItem("therapist");
@@ -71,14 +82,14 @@ export const AuthProvider = ({ children }) => {
     restoreSession();
   }, []);
 
-  // Login function
+  // Login
   const login = (authToken, therapistData) => {
     console.log("Login successful");
 
     // Save token
     localStorage.setItem("token", authToken);
 
-    // Save therapist information
+    // Save therapist
     localStorage.setItem(
       "therapist",
       JSON.stringify(therapistData)
@@ -91,15 +102,13 @@ export const AuthProvider = ({ children }) => {
     setLoading(false);
   };
 
-  // Logout function
+  // Logout
   const logout = () => {
     console.log("Logging out...");
 
-    // Remove saved data
     localStorage.removeItem("token");
     localStorage.removeItem("therapist");
 
-    // Clear React state
     setToken("");
     setTherapist(null);
 
@@ -108,6 +117,8 @@ export const AuthProvider = ({ children }) => {
 
   // Update therapist information
   const updateTherapistData = (updatedTherapist) => {
+    console.log("Updating therapist:", updatedTherapist);
+
     localStorage.setItem(
       "therapist",
       JSON.stringify(updatedTherapist)
@@ -131,4 +142,3 @@ export const AuthProvider = ({ children }) => {
     </AuthContext.Provider>
   );
 };
-
