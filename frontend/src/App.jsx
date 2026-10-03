@@ -1,6 +1,13 @@
 
-import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
-import { AuthProvider } from "./context/AuthContext";
+import React, { useContext } from "react";
+import {
+  BrowserRouter,
+  Routes,
+  Route,
+  Navigate,
+} from "react-router-dom";
+
+import { AuthProvider, AuthContext } from "./context/AuthContext";
 
 import Login from "./pages/auth/Login";
 import Register from "./pages/auth/Register";
@@ -12,20 +19,51 @@ import AnalyticsDashboard from "./components/Analytics";
 import Layout from "./components/Layout";
 import Chat from "./components/Chat";
 
+// Home route
+function HomeRedirect() {
+  const { token, loading } = useContext(AuthContext);
+
+  // Wait until AuthContext checks localStorage
+  if (loading) {
+    return (
+      <div
+        style={{
+          textAlign: "center",
+          padding: "50px",
+          fontSize: "20px",
+        }}
+      >
+        Loading...
+      </div>
+    );
+  }
+
+  // Logged in → Dashboard
+  if (token) {
+    return <Navigate to="/dashboard" replace />;
+  }
+
+  // Not logged in → Login
+  return <Navigate to="/login" replace />;
+}
+
 function App() {
   return (
     <BrowserRouter>
       <AuthProvider>
-
         <Routes>
 
-          {/* Home */}
+          {/* =========================
+              HOME
+          ========================= */}
           <Route
             path="/"
-            element={<Navigate to="/dashboard" replace />}
+            element={<HomeRedirect />}
           />
 
-          {/* Authentication */}
+          {/* =========================
+              AUTHENTICATION
+          ========================= */}
           <Route
             path="/login"
             element={<Login />}
@@ -36,13 +74,17 @@ function App() {
             element={<Register />}
           />
 
-          {/* Client Notes */}
+          {/* =========================
+              CLIENT NOTES
+          ========================= */}
           <Route
             path="/client/notes"
             element={<ClientNotes />}
           />
 
-          {/* Main Application */}
+          {/* =========================
+              MAIN APPLICATION
+          ========================= */}
           <Route element={<Layout />}>
 
             {/* Dashboard */}
@@ -77,18 +119,18 @@ function App() {
 
           </Route>
 
-          {/* Unknown URL */}
+          {/* =========================
+              UNKNOWN URL
+          ========================= */}
           <Route
             path="*"
-            element={<Navigate to="/dashboard" replace />}
+            element={<HomeRedirect />}
           />
 
         </Routes>
-
       </AuthProvider>
     </BrowserRouter>
   );
 }
 
 export default App;
-
