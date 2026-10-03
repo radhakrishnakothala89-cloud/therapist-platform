@@ -1,13 +1,5 @@
-
-import React, { useContext } from "react";
-import {
-  BrowserRouter,
-  Routes,
-  Route,
-  Navigate,
-} from "react-router-dom";
-
-import { AuthProvider, AuthContext } from "./context/AuthContext";
+import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
+import { AuthProvider } from "./context/AuthContext";
 
 import Login from "./pages/auth/Login";
 import Register from "./pages/auth/Register";
@@ -19,38 +11,11 @@ import AnalyticsDashboard from "./components/Analytics";
 import Layout from "./components/Layout";
 import Chat from "./components/Chat";
 
-// Home route
-function HomeRedirect() {
-  const { token, loading } = useContext(AuthContext);
-
-  // Wait until AuthContext checks localStorage
-  if (loading) {
-    return (
-      <div
-        style={{
-          textAlign: "center",
-          padding: "50px",
-          fontSize: "20px",
-        }}
-      >
-        Loading...
-      </div>
-    );
-  }
-
-  // Logged in → Dashboard
-  if (token) {
-    return <Navigate to="/dashboard" replace />;
-  }
-
-  // Not logged in → Login
-  return <Navigate to="/login" replace />;
-}
-
 function App() {
   return (
     <BrowserRouter>
       <AuthProvider>
+
         <Routes>
 
           {/* =========================
@@ -58,17 +23,20 @@ function App() {
           ========================= */}
           <Route
             path="/"
-            element={<HomeRedirect />}
+            element={<Navigate to="/dashboard" replace />}
           />
 
           {/* =========================
-              AUTHENTICATION
+              LOGIN
           ========================= */}
           <Route
             path="/login"
             element={<Login />}
           />
 
+          {/* =========================
+              REGISTER
+          ========================= */}
           <Route
             path="/register"
             element={<Register />}
@@ -124,10 +92,11 @@ function App() {
           ========================= */}
           <Route
             path="*"
-            element={<HomeRedirect />}
+            element={<Navigate to="/dashboard" replace />}
           />
 
         </Routes>
+
       </AuthProvider>
     </BrowserRouter>
   );
