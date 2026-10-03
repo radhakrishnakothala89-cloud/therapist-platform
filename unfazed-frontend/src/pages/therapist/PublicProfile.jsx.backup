@@ -331,7 +331,7 @@ const PublicProfile = () => {
             {selectedSlot && (
               <div style={{ borderTop: "1.5px solid #e2e8f0", paddingTop: "20px" }}>
                 <h3 style={{ fontSize: "16px", fontWeight: "800", color: "#111827", marginBottom: "14px" }}>
-                  4. Client Intake ({selectedSlot.startTime} â€“ {selectedSlot.endTime})
+                  4. Client Intake ({selectedSlot.startTime} – {selectedSlot.endTime})
                 </h3>
                 <div style={{ display: "grid", gridTemplateColumns: "2fr 1fr", gap: "12px", marginBottom: "12px" }}>
                   <div>
