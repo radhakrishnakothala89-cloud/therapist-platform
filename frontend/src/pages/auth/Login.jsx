@@ -1,3 +1,4 @@
+
 import React, { useState, useContext } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { AuthContext } from "../../context/AuthContext";
@@ -14,15 +15,64 @@ const Login = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+
     setError("");
     setLoading(true);
 
     try {
-      const res = await axiosInstance.post("/auth/login", { email, password });
-      login(res.data.token, res.data.therapist);
+      // Remove accidental spaces
+      const cleanEmail = email.trim().toLowerCase();
+
+      console.log("Sending login request...");
+      console.log("Email:", cleanEmail);
+      console.log("Password entered:", password ? "YES" : "NO");
+
+      const res = await axiosInstance.post("/auth/login", {
+        email: cleanEmail,
+        password: password,
+      });
+
+      console.log("Login response:", res.data);
+
+      if (!res.data.token) {
+        throw new Error("Token was not returned by server");
+      }
+
+      login(
+        res.data.token,
+        res.data.therapist
+      );
+
       navigate("/dashboard");
+
     } catch (err) {
-      setError(err.response?.data?.message || "Invalid email or password");
+      console.error("LOGIN ERROR:", err);
+
+      console.error(
+        "Status:",
+        err.response?.status
+      );
+
+      console.error(
+        "Backend response:",
+        err.response?.data
+      );
+
+      // Show exact backend message
+      if (err.response?.data?.message) {
+        setError(err.response.data.message);
+      } else if (err.response?.data?.errors) {
+        setError(
+          err.response.data.errors
+            .map((item) => item.msg)
+            .join(", ")
+        );
+      } else if (err.message) {
+        setError(err.message);
+      } else {
+        setError("Login failed");
+      }
+
     } finally {
       setLoading(false);
     }
@@ -31,51 +81,101 @@ const Login = () => {
   return (
     <div style={containerStyle}>
       <div style={cardStyle}>
-        {/* Dark and thick heading */}
-        <h2 style={titleStyle}>Therapist Login</h2>
 
-        {error && <div style={errorStyle}>{error}</div>}
+        <h2 style={titleStyle}>
+          Therapist Login
+        </h2>
+
+        {error && (
+          <div style={errorStyle}>
+            {error}
+          </div>
+        )}
 
         <form onSubmit={handleSubmit}>
+
+          {/* EMAIL */}
+
           <div style={groupStyle}>
-            <label style={labelStyle}>Email Address</label>
+            <label style={labelStyle}>
+              Email Address
+            </label>
+
             <input
               type="email"
               required
               placeholder="sharma@gmail.com"
               value={email}
-              onChange={(e) => setEmail(e.target.value)}
+              onChange={(e) =>
+                setEmail(e.target.value)
+              }
               style={inputStyle}
             />
           </div>
 
+          {/* PASSWORD */}
+
           <div style={groupStyle}>
-            <label style={labelStyle}>Password</label>
+            <label style={labelStyle}>
+              Password
+            </label>
+
             <input
               type="password"
               required
-              placeholder="Ã¯Â¿Â½Ã¯Â¿Â½Ã¯Â¿Â½Ã¯Â¿Â½Ã¯Â¿Â½Ã¯Â¿Â½Ã¯Â¿Â½Ã¯Â¿Â½"
+              placeholder="Enter your password"
               value={password}
-              onChange={(e) => setPassword(e.target.value)}
+              onChange={(e) =>
+                setPassword(e.target.value)
+              }
               style={inputStyle}
             />
           </div>
 
-          <button type="submit" disabled={loading} style={buttonStyle}>
-            {loading ? "Logging in..." : "Login"}
+          {/* LOGIN BUTTON */}
+
+          <button
+            type="submit"
+            disabled={loading}
+            style={buttonStyle}
+          >
+            {loading
+              ? "Logging in..."
+              : "Login"}
           </button>
+
         </form>
 
-        <p style={{ textAlign: "center", marginTop: 20, color: "#4a5568", fontSize: 14 }}>
+        <p
+          style={{
+            textAlign: "center",
+            marginTop: 20,
+            color: "#4a5568",
+            fontSize: 14,
+          }}
+        >
           Don't have an account?{" "}
-          <Link to="/register" style={{ color: "#3182ce", fontWeight: "600", textDecoration: "none" }}>
+
+          <Link
+            to="/register"
+            style={{
+              color: "#3182ce",
+              fontWeight: "600",
+              textDecoration: "none",
+            }}
+          >
             Register here
           </Link>
         </p>
+
       </div>
     </div>
   );
 };
+
+// ============================================================
+// STYLES
+// ============================================================
 
 const containerStyle = {
   display: "flex",
@@ -97,9 +197,9 @@ const cardStyle = {
 const titleStyle = {
   textAlign: "center",
   marginBottom: "24px",
-  color: "#1a202c",      // Dark charcoal black
-  fontWeight: "800",     // Extra bold / thick
-  fontSize: "26px",      // Prominent heading
+  color: "#1a202c",
+  fontWeight: "800",
+  fontSize: "26px",
   letterSpacing: "-0.5px",
 };
 
@@ -110,8 +210,8 @@ const groupStyle = {
 };
 
 const labelStyle = {
-  color: "#2d3748",      // Dark grey/black
-  fontWeight: "600",     // Semi-bold
+  color: "#2d3748",
+  fontWeight: "600",
   fontSize: "14px",
   marginBottom: "6px",
 };
@@ -120,8 +220,8 @@ const inputStyle = {
   padding: "12px 14px",
   borderRadius: "6px",
   border: "1.5px solid #cbd5e0",
-  backgroundColor: "#ffffff", // Pure white background
-  color: "#1a202c",           // Dark text
+  backgroundColor: "#ffffff",
+  color: "#1a202c",
   fontSize: "15px",
   outline: "none",
 };
@@ -150,3 +250,4 @@ const errorStyle = {
 };
 
 export default Login;
+

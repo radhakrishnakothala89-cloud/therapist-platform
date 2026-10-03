@@ -10,7 +10,6 @@ const axiosInstance = axios.create({
   },
 });
 
-// Automatically attach JWT token to requests
 axiosInstance.interceptors.request.use(
   (config) => {
     const token = localStorage.getItem("therapist_token");
@@ -21,9 +20,7 @@ axiosInstance.interceptors.request.use(
 
     return config;
   },
-  (error) => {
-    return Promise.reject(error);
-  }
+  (error) => Promise.reject(error)
 );
 
 export default axiosInstance;

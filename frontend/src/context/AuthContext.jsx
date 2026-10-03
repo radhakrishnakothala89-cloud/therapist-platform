@@ -5,65 +5,130 @@ import axiosInstance from "../api/axiosInstance";
 export const AuthContext = createContext();
 
 export const AuthProvider = ({ children }) => {
-  // Read token and therapist from localStorage on initial load
-  const [token, setToken] = useState(() => localStorage.getItem("token") || "");
-  const [therapist, setTherapist] = useState(() => {
-    const saved = localStorage.getItem("therapist");
-    return saved ? JSON.parse(saved) : null;
+  // Get saved token
+  const [token, setToken] = useState(() => {
+    return localStorage.getItem("token") || "";
   });
+
+  // Get saved therapist data
+  const [therapist, setTherapist] = useState(() => {
+    const savedTherapist = localStorage.getItem("therapist");
+
+    try {
+      return savedTherapist ? JSON.parse(savedTherapist) : null;
+    } catch (error) {
+      console.error("Invalid therapist data:", error);
+      return null;
+    }
+  });
+
+  // Loading state while checking session
   const [loading, setLoading] = useState(true);
 
-  // Restore session only once on page refresh
+  // Restore session when page is refreshed
   useEffect(() => {
     const restoreSession = async () => {
       const storedToken = localStorage.getItem("token");
-      if (storedToken) {
-        try {
-          const res = await axiosInstance.get("/profile/me");
-          if (res.data.therapist) {
-            setTherapist(res.data.therapist);
-            localStorage.setItem("therapist", JSON.stringify(res.data.therapist));
-          }
-        } catch (err) {
-          console.error("Session restore note:", err.message);
-          // Only clear if server explicitly rejects with 401
-          if (err.response?.status === 401) {
-            logout();
-          }
-        }
+
+      // No token means user is not logged in
+      if (!storedToken) {
+        setLoading(false);
+        return;
       }
-      setLoading(false);
+
+      try {
+        const response = await axiosInstance.get("/profile/me");
+
+        console.log("Session restored:", response.data);
+
+        if (response.data.therapist) {
+          setTherapist(response.data.therapist);
+
+          localStorage.setItem(
+            "therapist",
+            JSON.stringify(response.data.therapist)
+          );
+        }
+      } catch (error) {
+        console.error(
+          "Session restore error:",
+          error.response?.data || error.message
+        );
+
+        // Token is invalid or expired
+        if (error.response?.status === 401) {
+          localStorage.removeItem("token");
+          localStorage.removeItem("therapist");
+
+          setToken("");
+          setTherapist(null);
+        }
+      } finally {
+        setLoading(false);
+      }
     };
 
     restoreSession();
   }, []);
 
+  // Login function
   const login = (authToken, therapistData) => {
+    console.log("Login successful");
+
+    // Save token
     localStorage.setItem("token", authToken);
-    localStorage.setItem("therapist", JSON.stringify(therapistData));
+
+    // Save therapist information
+    localStorage.setItem(
+      "therapist",
+      JSON.stringify(therapistData)
+    );
+
+    // Update React state
     setToken(authToken);
     setTherapist(therapistData);
+
     setLoading(false);
   };
 
+  // Logout function
   const logout = () => {
+    console.log("Logging out...");
+
+    // Remove saved data
     localStorage.removeItem("token");
     localStorage.removeItem("therapist");
+
+    // Clear React state
     setToken("");
     setTherapist(null);
+
     setLoading(false);
   };
 
-  const updateTherapistData = (updated) => {
-    localStorage.setItem("therapist", JSON.stringify(updated));
-    setTherapist(updated);
+  // Update therapist information
+  const updateTherapistData = (updatedTherapist) => {
+    localStorage.setItem(
+      "therapist",
+      JSON.stringify(updatedTherapist)
+    );
+
+    setTherapist(updatedTherapist);
   };
 
   return (
     <AuthContext.Provider
-      value={{ therapist, token, login, logout, updateTherapistData, loading }}
+      value={{
+        token,
+        therapist,
+        login,
+        logout,
+        updateTherapistData,
+        loading,
+      }}
     >
       {children}
     </AuthContext.Provider>
   );
 };
+
