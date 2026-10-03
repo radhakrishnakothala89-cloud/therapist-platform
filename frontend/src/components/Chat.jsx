@@ -1,8 +1,8 @@
 import React, { useState, useEffect, useRef } from "react";
-import { io } from "socket.io-client";
-
-const socket = io("http://localhost:5000");
-
+const socket = io(
+  import.meta.env.VITE_SOCKET_URL ||
+  "https://therapist-platform-backend.onrender.com"
+);
 export default function Chat({ currentUserId, recipientId, recipientName }) {
   const [messages, setMessages] = useState([]);
   const [input, setInput] = useState("");
