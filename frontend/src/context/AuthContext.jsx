@@ -4,20 +4,36 @@ import axiosInstance from "../api/axiosInstance";
 export const AuthContext = createContext();
 
 export const AuthProvider = ({ children }) => {
+  console.log("🔥 NEW AUTH CONTEXT IS RUNNING");
+
   // Get saved token
   const [token, setToken] = useState(() => {
-    return localStorage.getItem("token") || "";
+    const savedToken = localStorage.getItem("token");
+
+    console.log(
+      "🔑 Saved token:",
+      savedToken ? "Token exists" : "No token"
+    );
+
+    return savedToken || "";
   });
 
   // Get saved therapist data
   const [therapist, setTherapist] = useState(() => {
     const savedTherapist = localStorage.getItem("therapist");
 
+    console.log(
+      "👤 Saved therapist:",
+      savedTherapist ? savedTherapist : "No therapist"
+    );
+
     try {
       return savedTherapist ? JSON.parse(savedTherapist) : null;
     } catch (error) {
-      console.error("Invalid therapist data:", error);
+      console.error("❌ Invalid therapist data:", error);
+
       localStorage.removeItem("therapist");
+
       return null;
     }
   });
@@ -27,27 +43,36 @@ export const AuthProvider = ({ children }) => {
 
   // Restore session when page is refreshed
   useEffect(() => {
+    console.log("🚀 AuthContext useEffect started");
+
     const restoreSession = async () => {
       const storedToken = localStorage.getItem("token");
 
+      console.log(
+        "🔍 Checking stored token:",
+        storedToken ? "Token exists" : "No token"
+      );
+
       // No token
       if (!storedToken) {
+        console.log("⚠️ No token found. Stopping session restore.");
+
         setLoading(false);
         return;
       }
 
       try {
-        console.log("Restoring session...");
+        console.log("🔄 Restoring session...");
 
         const response = await axiosInstance.get("/profile/me");
 
-        console.log("Profile response:", response.data);
+        console.log("✅ Profile response:", response.data);
 
-        // Backend returns user, not therapist
+        // Backend returns user
         const user = response.data.user;
 
         if (user) {
-          console.log("Therapist restored:", user);
+          console.log("✅ Therapist restored:", user);
 
           setTherapist(user);
 
@@ -56,18 +81,22 @@ export const AuthProvider = ({ children }) => {
             JSON.stringify(user)
           );
         } else {
-          console.error("No user data received from backend");
+          console.error("❌ No user data received from backend");
 
           setTherapist(null);
         }
       } catch (error) {
         console.error(
-          "Session restore error:",
+          "❌ Session restore error:",
           error.response?.data || error.message
         );
 
+        console.error("Full error:", error);
+
         // Token expired or invalid
         if (error.response?.status === 401) {
+          console.log("⚠️ Token expired or invalid.");
+
           localStorage.removeItem("token");
           localStorage.removeItem("therapist");
 
@@ -75,6 +104,8 @@ export const AuthProvider = ({ children }) => {
           setTherapist(null);
         }
       } finally {
+        console.log("🏁 Session restore finished");
+
         setLoading(false);
       }
     };
@@ -84,7 +115,10 @@ export const AuthProvider = ({ children }) => {
 
   // Login
   const login = (authToken, therapistData) => {
-    console.log("Login successful");
+    console.log("✅ Login successful");
+
+    console.log("Token received:", authToken);
+    console.log("Therapist data received:", therapistData);
 
     // Save token
     localStorage.setItem("token", authToken);
@@ -104,7 +138,7 @@ export const AuthProvider = ({ children }) => {
 
   // Logout
   const logout = () => {
-    console.log("Logging out...");
+    console.log("🚪 Logging out...");
 
     localStorage.removeItem("token");
     localStorage.removeItem("therapist");
@@ -117,7 +151,10 @@ export const AuthProvider = ({ children }) => {
 
   // Update therapist information
   const updateTherapistData = (updatedTherapist) => {
-    console.log("Updating therapist:", updatedTherapist);
+    console.log(
+      "✏️ Updating therapist:",
+      updatedTherapist
+    );
 
     localStorage.setItem(
       "therapist",
